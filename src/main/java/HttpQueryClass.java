@@ -26,7 +26,9 @@ public class HttpQueryClass {
         } catch (ClientProtocolException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("time out..let's work with old data");
+            return result;
+            //throw new RuntimeException(e);
         }
         return result + param;
     }
