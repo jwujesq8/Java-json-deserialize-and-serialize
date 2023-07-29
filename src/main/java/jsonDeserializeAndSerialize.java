@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,26 +17,18 @@ public class jsonDeserializeAndSerialize {
     static Location[] location = null;
     public static void deserialize(ObjectMapper mapper, String data){
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        if(data==null){
-            try {
+        try{
+            if(data==null) {
+                System.out.println("received data is empty so let's work with the old data");
                 location = mapper.readValue(new File(userDirectory + "\\all.json"), Location[].class);
-            } catch (JsonGenerationException e) {
-                e.printStackTrace();
-            } catch (JsonMappingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-        } else{
-            try {
-                location = mapper.readValue(data, Location[].class);
-            } catch (JsonGenerationException e) {
-                e.printStackTrace();
-            } catch (JsonMappingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            else location = mapper.readValue(data, Location[].class);
+        } catch (JsonGenerationException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
@@ -49,18 +39,11 @@ public class jsonDeserializeAndSerialize {
         jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
         Scanner scanner = new Scanner(System.in);
 
-        ProcessQ processQ = new ProcessQ(new HttpQueryClass());
-        String dataLinkResult= processQ.process("", link);
-
-        if(dataLinkResult!=null){
-            File rawJSONData = new File(userDirectory + "\\all.json");
-            BufferedWriter writer = new BufferedWriter(new FileWriter(rawJSONData));
-            writer.write(String.valueOf(dataLinkResult));
-            writer.close();
-        }
+        ProcessQ getTheWholeDataProcess = new ProcessQ(new HttpQueryClass());
+        String dataLinkResult= getTheWholeDataProcess.process("", link);
         deserialize(jsonMapper, dataLinkResult);
 
-        //available stations and id
+        //available stations with id
         System.out.println("list of stations with there id:");
         for(Location loc : location){
             System.out.println("STATION_ID: "+loc.getId() + ", STATION_NAME: "+loc.getStationName());
@@ -68,11 +51,11 @@ public class jsonDeserializeAndSerialize {
 
         //display available cities
         System.out.print("Do you want to see the list of available cities? (yes/no): ");
-        String display_available_cities;
+        String displayAvailableCities;
         do{
-            display_available_cities = scanner.nextLine();
-        } while(!(display_available_cities.equals("yes") || display_available_cities.equals("no")));
-        if(display_available_cities.equals("yes")){
+            displayAvailableCities = scanner.nextLine();
+        } while(!(displayAvailableCities.equals("yes") || displayAvailableCities.equals("no")));
+        if(displayAvailableCities.equals("yes")){
             List<String> citiesList = Arrays.stream(location)
                     .map(Location::getCity)
                     .map(City::getName)
@@ -89,27 +72,27 @@ public class jsonDeserializeAndSerialize {
             displayIdsOfTheGivenCity = scanner.nextLine();
         } while (!(displayIdsOfTheGivenCity.equals("yes") || displayIdsOfTheGivenCity.equals("no")));
         if(displayIdsOfTheGivenCity.equals("yes")){
-            Map<Integer, String> queueOfId = new HashMap<>();
+            Map<Integer, String> queueOfIds = new HashMap<>();
             System.out.print("enter the city: ");
-            String cityName=scanner.next();
+            String cityName=scanner.nextLine();
             for(Location loc: location){
                 if(loc.getCity().getName().equals(cityName)){
-                    queueOfId.put(loc.getId(), loc.getAddressStreet());
+                    queueOfIds.put(loc.getId(), loc.getAddressStreet());
                 }
             }
-            System.out.println("\n\t" + queueOfId);
+            System.out.println("\n\t" + queueOfIds);
         }
 
         System.out.print("enter the id of the station: ");
         int stationId = scanner.nextInt();
         String idInfoLink = "https://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/" + stationId;
 
-        ProcessQ processQStationId = new ProcessQ(new HttpQueryClass());
-        String stationIdLinkResult = processQStationId.process("", idInfoLink);
+        ProcessQ getStationInfoProcess = new ProcessQ(new HttpQueryClass());
+        String stationLinkResult = getStationInfoProcess.process("", idInfoLink);
 
-        if (stationIdLinkResult != null) {
+        if (stationLinkResult != null) {
             InfID stationIdInfo;
-            stationIdInfo = jsonMapper.readValue(stationIdLinkResult, InfID.class);
+            stationIdInfo = jsonMapper.readValue(stationLinkResult, InfID.class);
 
             System.out.print("Which format of the data will you prefer? (enter number):\n\t1.JSON\n\t2.XML\n\t3.PDF\nanswer: ");
             int dataFormat;
